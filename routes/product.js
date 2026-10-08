@@ -86,10 +86,6 @@ myrouter.post('/products', (req, res) => {
         })
     }
 
-
-
-
-
     const newproduct = {
         id: nextproductId++,
         ...req.body
@@ -103,21 +99,6 @@ myrouter.post('/products', (req, res) => {
     })
 
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 export default myrouter;
