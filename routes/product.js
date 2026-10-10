@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Router } from "express";
 const myrouter = express.Router();
 
 const products = [
@@ -326,6 +326,28 @@ myrouter.patch('/products/:id', (req, res) => {
         data: selecteProduct
     });
 });
+
+myrouter.delete('/products/:id', (req, res) => {
+    const ProductID = Number(req.params.id);
+    const ProductPosition = products.findIndex((product) => product.id === ProductID);
+
+    if (ProductPosition === -1) {
+        return res.status(404).send({
+            status: 404,
+            message: "Product not Found!"
+        })
+    }
+
+    const deletedProduct = products.splice(ProductPosition, 1)
+
+    res.status(200).send({
+        status: 200,
+        message: "Product Deleted Successfully!",
+        data: deletedProduct[0]
+    })
+
+
+})
 
 
 
