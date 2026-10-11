@@ -72,6 +72,42 @@ myrouter.get("/products/filter", (req, res) => {
 });
 
 
+myrouter.get('/products/search', (req, res) => {
+    const Searchname = req.query.name;
+
+
+    if (typeof Searchname !== "string" || !Searchname.trim()) {
+        res.status(400).send({
+            status: 400,
+            message: "Pleae Provide a Valid Product Search Name!"
+        })
+    }
+    if (Searchname === undefined) {
+        return res.status(400).send({
+            status: 400,
+            message: "Product Not Found"
+        })
+    }
+
+    let filteredProduct = products.filter((product) => product.name.toLowerCase().includes(Searchname.trim().toLowerCase()));
+
+    res.status(200).send({
+        status: 200,
+        message: "Product Filtered",
+        data: filteredProduct
+    })
+
+})
+
+
+
+
+
+
+
+
+
+
 // 3. GET one product by ID
 myrouter.get("/products/:id", (req, res) => {
     const productID = Number(req.params.id);
@@ -412,6 +448,7 @@ myrouter.delete("/products/:id", (req, res) => {
         data: deletedProducts[0]
     });
 });
+
 
 
 export default myrouter;
