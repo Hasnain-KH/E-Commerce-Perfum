@@ -1,6 +1,9 @@
-import express, { Router } from "express";
+
+import express from "express";
+
 const myrouter = express.Router();
 
+// Initial product data
 const products = [
     {
         id: 1,
@@ -31,209 +34,265 @@ const products = [
     }
 ];
 
+let nextProductId = 4;
 
 
-myrouter.get('/products', (req, res) => {
-    res.status(200).send({ status: 200, message: "data fecthed", data: [products] });
+// 1. GET all products
+myrouter.get("/products", (req, res) => {
+    return res.status(200).send({
+        status: 200,
+        message: "Products fetched successfully!",
+        data: products
+    });
 });
 
 
-myrouter.get('/products/:id', (req, res) => {
+// 2. GET products by category
+// IMPORTANT: Keep this before GET /products/:id
+myrouter.get("/products/filter", (req, res) => {
+    const category = req.query.category;
+
+    if (typeof category !== "string" || !category.trim()) {
+        return res.status(400).send({
+            status: 400,
+            message: "Please provide a product category!"
+        });
+    }
+
+    const filteredProducts = products.filter(
+        (product) =>
+            product.category.toLowerCase() === category.trim().toLowerCase()
+    );
+
+    return res.status(200).send({
+        status: 200,
+        message: "Products filtered successfully!",
+        data: filteredProducts
+    });
+});
+
+
+// 3. GET one product by ID
+myrouter.get("/products/:id", (req, res) => {
     const productID = Number(req.params.id);
-    const product = products.find((u) => u.id === productID);
+
+    if (!Number.isInteger(productID) || productID <= 0) {
+        return res.status(400).send({
+            status: 400,
+            message: "Product ID must be a positive integer!"
+        });
+    }
+
+    const product = products.find((item) => item.id === productID);
 
     if (!product) {
         return res.status(404).send({
             status: 404,
-            message: "Product is not Availible"
-        })
+            message: "Product not found!"
+        });
     }
 
-    res.status(200).send({
+    return res.status(200).send({
         status: 200,
-        message: "Specific Product Fecthed Successfully!",
+        message: "Product fetched successfully!",
         data: product
-    })
-})
+    });
+});
 
 
-
-let nextproductId = 4;
-
-myrouter.post('/products', (req, res) => {
+// 4. POST a new product
+myrouter.post("/products", (req, res) => {
     const { name, price, category, image, stock, description } = req.body;
 
-
-    if (!name || !price || !category || !image || !stock || !description) {
+    if (
+        name === undefined ||
+        price === undefined ||
+        category === undefined ||
+        image === undefined ||
+        stock === undefined ||
+        description === undefined
+    ) {
         return res.status(400).send({
             status: 400,
-            message: "All Products Fields are Required"
-        })
-    }
-
-
-    if (price <= 0) {
-        return res.status(400).send({ status: 400, message: "price must be greater than 0" })
-    }
-
-
-    if (stock < 0) {
-        return res.status(400).send({ status: 400, message: "Stock Can't be negative" })
+            message: "All product fields are required!"
+        });
     }
 
     if (
         typeof name !== "string" ||
-        typeof price !== "number" ||
         typeof category !== "string" ||
         typeof image !== "string" ||
-        typeof stock !== "number" ||
-        typeof description !== "string"
+        typeof description !== "string" ||
+        typeof price !== "number" ||
+        typeof stock !== "number"
     ) {
         return res.status(400).send({
             status: 400,
-            message: "Invalid Product Data Type"
-        })
+            message: "Invalid product data types!"
+        });
     }
 
-    const newproduct = {
-        id: nextproductId++,
-        ...req.body
+    if (
+        !name.trim() ||
+        !category.trim() ||
+        !image.trim() ||
+        !description.trim()
+    ) {
+        return res.status(400).send({
+            status: 400,
+            message: "Text fields cannot be empty!"
+        });
     }
-    products.push(newproduct);
-    res.status(201).send({
+
+    if (!Number.isFinite(price) || price <= 0) {
+        return res.status(400).send({
+            status: 400,
+            message: "Price must be a number greater than 0!"
+        });
+    }
+
+    if (!Number.isInteger(stock) || stock < 0) {
+        return res.status(400).send({
+            status: 400,
+            message: "Stock must be a non-negative integer!"
+        });
+    }
+
+    const newProduct = {
+        id: nextProductId++,
+        name,
+        price,
+        category,
+        image,
+        stock,
+        description
+    };
+
+    products.push(newProduct);
+
+    return res.status(201).send({
         status: 201,
-        message: "New Product added Successfully!",
-        data: [newproduct]
-
-    })
-
-})
+        message: "New product added successfully!",
+        data: newProduct
+    });
+});
 
 
+// 5. PUT: replace all editable fields of a product
+myrouter.put("/products/:id", (req, res) => {
+    const productID = Number(req.params.id);
 
-// PUt Used
-
-myrouter.put('/products/:id', (req, res) => {
-
-    const { name, price, category, image, stock, description } = req.body;
-    const userID = Number(req.params.id);
-    const Productposition = products.findIndex((products) => products.id === userID);
-
-    if (Productposition === -1) {
-        return res.status(404).send({ status: 404, message: "Product not Found" })
-    }
-
-    if (!name || !price || !category || !image || !stock || !description) {
+    if (!Number.isInteger(productID) || productID <= 0) {
         return res.status(400).send({
             status: 400,
-            message: "All Products Fields are Required"
-        })
-    }
-    if (typeof name !== "string" || typeof price !== "number" || typeof category !== "string" || typeof image !== "string" || typeof stock !== "number" || typeof description !== "string") {
-        return res.status(400).send({ status: 400, Message: "Invalid Product Data Type!" })
-    }
-    if (price <= 0) {
-        return res.status(400).send({
-            status: 400,
-            message: "Price Must be greater than 0"
-        })
-    }
-    if (stock < 0) {
-        return res.status(400).send({
-            status: 400,
-            message: "Stock Can not be In Negative"
-        })
+            message: "Product ID must be a positive integer!"
+        });
     }
 
-    products[Productposition] = {
-        ...req.body,
-        id: userID,
-    }
-
-
-    res.status(200).send({
-        status: 200,
-        data: products,
-        message: "Product Updated Successfylly!"
-    })
-
-})
-
-
-// myrouter.patch('/products/:id', (req, res) => {
-
-//     const { name, price, category, image, stock, description } = req.body;
-
-//     const ProductID = Number(req.params.id);
-
-//     let selecteProduct = products.find((pro) => ProductID === pro.id);
-
-
-//     if (!selecteProduct) {
-//         return res.status(404).send({
-//             status: 404,
-//             message: "Product Not Found!"
-//         })
-//     }
-
-//     if (name) {
-//         selecteProduct.name = name;
-//     }
-
-//     if (price <= 0) {
-//         res.status(400).send({
-//             status: 400,
-//             message: "Price Must Be Greater than 0"
-//         })
-//     }
-
-//     if (price) {
-//         selecteProduct.price = price;
-//     }
-//     if (category) {
-//         selecteProduct.category = category;
-//     }
-//     if (image) {
-//         selecteProduct.image = image;
-//     }
-
-//     if (stock < 0) {
-//         res.status(400).send({
-//             status: 400,
-//             message: "Stock Can't be 0"
-//         })
-//     }
-
-//     if (stock) {
-//         products[selecteProduct] = stock;
-//     }
-//     if (description) {
-//         products[selecteProduct] = description;
-//     }
-
-
-//     res.status(200).send({
-//         status: 200,
-//         message: "User Partially Updated Successfully!",
-//         data: products
-//     })
-
-
-// })
-
-
-
-myrouter.patch('/products/:id', (req, res) => {
-    const ProductID = Number(req.params.id);
-
-    const selecteProduct = products.find(
-        (pro) => pro.id === ProductID
+    const productPosition = products.findIndex(
+        (product) => product.id === productID
     );
 
-    if (!selecteProduct) {
+    if (productPosition === -1) {
         return res.status(404).send({
             status: 404,
-            message: "Product Not Found!"
+            message: "Product not found!"
+        });
+    }
+
+    const { name, price, category, image, stock, description } = req.body;
+
+    if (
+        name === undefined ||
+        price === undefined ||
+        category === undefined ||
+        image === undefined ||
+        stock === undefined ||
+        description === undefined
+    ) {
+        return res.status(400).send({
+            status: 400,
+            message: "All product fields are required for PUT!"
+        });
+    }
+
+    if (
+        typeof name !== "string" ||
+        typeof category !== "string" ||
+        typeof image !== "string" ||
+        typeof description !== "string" ||
+        typeof price !== "number" ||
+        typeof stock !== "number"
+    ) {
+        return res.status(400).send({
+            status: 400,
+            message: "Invalid product data types!"
+        });
+    }
+
+    if (
+        !name.trim() ||
+        !category.trim() ||
+        !image.trim() ||
+        !description.trim()
+    ) {
+        return res.status(400).send({
+            status: 400,
+            message: "Text fields cannot be empty!"
+        });
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+        return res.status(400).send({
+            status: 400,
+            message: "Price must be greater than 0!"
+        });
+    }
+
+    if (!Number.isInteger(stock) || stock < 0) {
+        return res.status(400).send({
+            status: 400,
+            message: "Stock must be a non-negative integer!"
+        });
+    }
+
+    const updatedProduct = {
+        id: productID,
+        name,
+        price,
+        category,
+        image,
+        stock,
+        description
+    };
+
+    products[productPosition] = updatedProduct;
+
+    return res.status(200).send({
+        status: 200,
+        message: "Product updated successfully!",
+        data: updatedProduct
+    });
+});
+
+
+// 6. PATCH: update only the supplied fields
+myrouter.patch("/products/:id", (req, res) => {
+    const productID = Number(req.params.id);
+
+    if (!Number.isInteger(productID) || productID <= 0) {
+        return res.status(400).send({
+            status: 400,
+            message: "Product ID must be a positive integer!"
+        });
+    }
+
+    const product = products.find((item) => item.id === productID);
+
+    if (!product) {
+        return res.status(404).send({
+            status: 404,
+            message: "Product not found!"
         });
     }
 
@@ -251,7 +310,7 @@ myrouter.patch('/products/:id', (req, res) => {
     if (updates.length === 0) {
         return res.status(400).send({
             status: 400,
-            message: "At least one field is required"
+            message: "Provide at least one field to update!"
         });
     }
 
@@ -268,87 +327,91 @@ myrouter.patch('/products/:id', (req, res) => {
 
     const { name, price, category, image, stock, description } = req.body;
 
-    if (name !== undefined && typeof name !== "string") {
+    if (
+        (name !== undefined &&
+            (typeof name !== "string" || !name.trim())) ||
+        (category !== undefined &&
+            (typeof category !== "string" || !category.trim())) ||
+        (image !== undefined &&
+            (typeof image !== "string" || !image.trim())) ||
+        (description !== undefined &&
+            (typeof description !== "string" || !description.trim()))
+    ) {
         return res.status(400).send({
             status: 400,
-            message: "Name must be a string"
+            message: "Text fields must be non-empty strings!"
         });
     }
 
-    if (price !== undefined &&
-        (typeof price !== "number" || price <= 0)) {
+    if (
+        price !== undefined &&
+        (typeof price !== "number" ||
+            !Number.isFinite(price) ||
+            price <= 0)
+    ) {
         return res.status(400).send({
             status: 400,
-            message: "Price must be a number greater than 0"
+            message: "Price must be a number greater than 0!"
         });
     }
 
-    if (category !== undefined && typeof category !== "string") {
+    if (
+        stock !== undefined &&
+        (typeof stock !== "number" ||
+            !Number.isInteger(stock) ||
+            stock < 0)
+    ) {
         return res.status(400).send({
             status: 400,
-            message: "Category must be a string"
+            message: "Stock must be a non-negative integer!"
         });
     }
 
-    if (image !== undefined && typeof image !== "string") {
-        return res.status(400).send({
-            status: 400,
-            message: "Image must be a string"
-        });
-    }
-
-    if (stock !== undefined &&
-        (typeof stock !== "number" || stock < 0)) {
-        return res.status(400).send({
-            status: 400,
-            message: "Stock must be a number and cannot be negative"
-        });
-    }
-
-    if (description !== undefined &&
-        typeof description !== "string") {
-        return res.status(400).send({
-            status: 400,
-            message: "Description must be a string"
-        });
-    }
-
-    if (name !== undefined) selecteProduct.name = name;
-    if (price !== undefined) selecteProduct.price = price;
-    if (category !== undefined) selecteProduct.category = category;
-    if (image !== undefined) selecteProduct.image = image;
-    if (stock !== undefined) selecteProduct.stock = stock;
-    if (description !== undefined) selecteProduct.description = description;
+    if (name !== undefined) product.name = name;
+    if (price !== undefined) product.price = price;
+    if (category !== undefined) product.category = category;
+    if (image !== undefined) product.image = image;
+    if (stock !== undefined) product.stock = stock;
+    if (description !== undefined) product.description = description;
 
     return res.status(200).send({
         status: 200,
-        message: "Product Partially Updated Successfully!",
-        data: selecteProduct
+        message: "Product partially updated successfully!",
+        data: product
     });
 });
 
-myrouter.delete('/products/:id', (req, res) => {
-    const ProductID = Number(req.params.id);
-    const ProductPosition = products.findIndex((product) => product.id === ProductID);
 
-    if (ProductPosition === -1) {
-        return res.status(404).send({
-            status: 404,
-            message: "Product not Found!"
-        })
+// 7. DELETE a product
+myrouter.delete("/products/:id", (req, res) => {
+    const productID = Number(req.params.id);
+
+    if (!Number.isInteger(productID) || productID <= 0) {
+        return res.status(400).send({
+            status: 400,
+            message: "Product ID must be a positive integer!"
+        });
     }
 
-    const deletedProduct = products.splice(ProductPosition, 1)
+    const productPosition = products.findIndex(
+        (product) => product.id === productID
+    );
 
-    res.status(200).send({
+    if (productPosition === -1) {
+        return res.status(404).send({
+            status: 404,
+            message: "Product not found!"
+        });
+    }
+
+    const deletedProducts = products.splice(productPosition, 1);
+
+    return res.status(200).send({
         status: 200,
-        message: "Product Deleted Successfully!",
-        data: deletedProduct[0]
-    })
-
-
-})
-
+        message: "Product deleted successfully!",
+        data: deletedProducts[0]
+    });
+});
 
 
 export default myrouter;
