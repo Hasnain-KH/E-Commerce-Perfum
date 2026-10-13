@@ -37,14 +37,51 @@ const products = [
 let nextProductId = 4;
 
 
-// 1. GET all products
+
+
 myrouter.get("/products", (req, res) => {
+
+    const totalProducts = products.length;
+    console.log(`totalProduct are ${totalProducts} `);
+
+    const page = Number(req.query.page ?? 1);
+
+    const limit = Number(req.query.limit ?? 10);
+
+    const pages = Math.ceil(totalProducts / limit)
+
+
+
+
+    if (!Number.isInteger(page) || page < 1) {
+        res.status(400).send({
+            status: 400,
+            message: "Page must be a positive integer."
+        })
+    }
+
+    const skip = (page - 1) * limit;
+
+    const paginatedproducts = products.slice(skip, skip + limit);
+
+    console.log(page);
+    console.log(limit);
+
     return res.status(200).send({
         status: 200,
         message: "Products fetched successfully!",
-        data: products
+        data: paginatedproducts
     });
 });
+
+
+
+
+
+
+
+
+
 
 
 // 2. GET products by category
@@ -98,15 +135,6 @@ myrouter.get('/products/search', (req, res) => {
     })
 
 })
-
-
-
-
-
-
-
-
-
 
 // 3. GET one product by ID
 myrouter.get("/products/:id", (req, res) => {
