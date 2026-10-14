@@ -37,49 +37,41 @@ const products = [
 let nextProductId = 4;
 
 
-
-
 myrouter.get("/products", (req, res) => {
 
     const totalProducts = products.length;
     console.log(`totalProduct are ${totalProducts} `);
 
-    const page = Number(req.query.page ?? 1);
-
+    const currentPage = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 10);
 
-    const pages = Math.ceil(totalProducts / limit)
-
-
-
-
-    if (!Number.isInteger(page) || page < 1) {
-        res.status(400).send({
+    if (!Number.isInteger(currentPage) || currentPage < 1) {
+        return res.status(400).send({
             status: 400,
             message: "Page must be a positive integer."
         })
     }
 
-    const skip = (page - 1) * limit;
+    if (!Number.isInteger(limit) || limit < 1) {
+        return res.status(400).send({
+            status: 400,
+            message: "Give Valid Limit"
+        })
+    }
 
+    const totalPages = Math.ceil(totalProducts / limit)
+
+
+    const skip = (currentPage - 1) * limit;
     const paginatedproducts = products.slice(skip, skip + limit);
-
-    console.log(page);
-    console.log(limit);
 
     return res.status(200).send({
         status: 200,
         message: "Products fetched successfully!",
-        data: paginatedproducts
+        data: paginatedproducts,
+        pagination: { totalProducts, currentPage, limit, totalPages }
     });
 });
-
-
-
-
-
-
-
 
 
 
