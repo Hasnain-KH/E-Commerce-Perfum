@@ -59,8 +59,24 @@ myrouter.get("/products", (req, res) => {
         })
     }
 
-    const totalPages = Math.ceil(totalProducts / limit)
+    if (limit > 50) {
+        return res.status(400).send({
+            status: 400,
+            message: "The Product limit is 50"
+        })
+    }
 
+    const totalPages = Math.ceil(totalProducts / limit)
+    if (currentPage > totalPages) {
+        return res.status(400).send({
+            status: 400,
+            message: `you have just ${totalPages}`
+        })
+    }
+
+    if (products.length === "") {
+
+    }
 
     const skip = (currentPage - 1) * limit;
     const paginatedproducts = products.slice(skip, skip + limit);
