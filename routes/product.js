@@ -5,42 +5,14 @@ const myrouter = express.Router();
 
 // Initial product data
 const products = [
-    {
-        id: 1,
-        name: "Royal Oud",
-        price: 4500,
-        category: "Men",
-        image: "royal-oud.jpg",
-        stock: 10,
-        description: "A long-lasting woody fragrance for men."
-    },
-    {
-        id: 2,
-        name: "Rose Noir",
-        price: 3800,
-        category: "Women",
-        image: "rose-noir.jpg",
-        stock: 15,
-        description: "A soft and elegant floral fragrance for women."
-    },
-    {
-        id: 3,
-        name: "Ocean Mist",
-        price: 4200,
-        category: "Unisex",
-        image: "ocean-mist.jpg",
-        stock: 8,
-        description: "A fresh and refreshing fragrance suitable for everyone."
-    }
+
 ];
 
 let nextProductId = 4;
 
 
 myrouter.get("/products", (req, res) => {
-
     const totalProducts = products.length;
-    console.log(`totalProduct are ${totalProducts} `);
 
     const currentPage = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 10);
@@ -49,45 +21,49 @@ myrouter.get("/products", (req, res) => {
         return res.status(400).send({
             status: 400,
             message: "Page must be a positive integer."
-        })
+        });
     }
 
     if (!Number.isInteger(limit) || limit < 1) {
         return res.status(400).send({
             status: 400,
-            message: "Give Valid Limit"
-        })
+            message: "Give a valid limit."
+        });
     }
 
     if (limit > 50) {
         return res.status(400).send({
             status: 400,
-            message: "The Product limit is 50"
-        })
+            message: "The product limit is 50."
+        });
     }
 
-    const totalPages = Math.ceil(totalProducts / limit)
-    if (currentPage > totalPages) {
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    if (totalProducts > 0 && currentPage > totalPages) {
         return res.status(400).send({
             status: 400,
-            message: `you have just ${totalPages}`
-        })
-    }
-
-    if (products.length === "") {
-
+            message: `You have only ${totalPages} pages.`
+        });
     }
 
     const skip = (currentPage - 1) * limit;
-    const paginatedproducts = products.slice(skip, skip + limit);
+    const paginatedProducts = products.slice(skip, skip + limit);
+
 
     return res.status(200).send({
         status: 200,
         message: "Products fetched successfully!",
-        data: paginatedproducts,
-        pagination: { totalProducts, currentPage, limit, totalPages }
+        data: paginatedProducts,
+        pagination: {
+            totalProducts,
+            currentPage,
+            limit,
+            totalPages
+        }
     });
 });
+
 
 
 
@@ -122,7 +98,7 @@ myrouter.get('/products/search', (req, res) => {
 
 
     if (typeof Searchname !== "string" || !Searchname.trim()) {
-        res.status(400).send({
+        return res.status(400).send({
             status: 400,
             message: "Pleae Provide a Valid Product Search Name!"
         })
